@@ -2,7 +2,7 @@ import React from 'react'
 
 const Integration = () => {
     return (
-        <section id='integration' className='py-20' >
+        <section id='integration' className='py-32 px-6 max-w-6xl mx-auto text-start' >
             <div className='max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16'>
                 <div className='flex-1'>
                     <div className="mb-10">

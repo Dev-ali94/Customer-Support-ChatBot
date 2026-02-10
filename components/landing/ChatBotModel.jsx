@@ -5,9 +5,9 @@ import Image from 'next/image'
 
 const ChatBotModel = () => {
     return (
-        <div className='max-w-3xl mx-auto realtive z-10 '>
+        <div className='max-w-3xl mx-auto relative z-10 '>
             <div className='absolute inset-0  rounded-full pointer-events-none' />
-            <div className='rounded-2xl p-1 md:p-2 realtive overflow-hidden ring-1 ring-white/20 bg-[#0a0a0e] shadow-2xl'>
+            <div className='rounded-2xl p-1 md:p-2 relative overflow-hidden ring-1 ring-white/20 bg-[#0a0a0e] shadow-2xl'>
                 <div className="flex flex-col h-125 md:150 bg-[#0a0a0e] rounded-xl overflow-hidden ">
                     <div className='h-14 border-b border-white/5 flex items-center justify-between px-6 bg-[#0E0E12] shrink-0'>
                         <div className='flex items-center gap-2'>

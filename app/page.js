@@ -3,7 +3,8 @@ import Features from '@/components/landing/Features'
 import Hero from '@/components/landing/Hero'
 import Integration from '@/components/landing/Integration'
 import Navbar from '@/components/landing/Navbar'
-import React from 'react'
+import Pricing from '@/components/landing/Pricing'
+import Footer from '@/components/landing/Footer'
 
 const page = () => {
   return (
@@ -13,6 +14,8 @@ const page = () => {
       <ChatBotModel />
       <Features />
       <Integration />
+      <Pricing />
+      <Footer />
     </main>
   )
 }

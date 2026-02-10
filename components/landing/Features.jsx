@@ -3,13 +3,13 @@ import React from 'react'
 
 const Features = () => {
     return (
-        <section id='feature' className='py-32 px-6 max-w-6xl mx-auto'>
+        <section id='feature' className='py-32 px-6 max-w-6xl mx-auto text-center'>
             <div className='mb-20'>
-                <h2 className='text-2xl  md:text-5xl font-medium text-white tracking-tight mb-6'>
+                <h2 className='text-2xl md:text-5xl font-medium text-white tracking-tight mb-6'>
                     Designed for trust.
                 </h2>
 
-                <p className='text-xl text-zinc-500 font-light max-w-2xl leading-relaxed'>
+                <p className='text-xl text-zinc-500 font-light mx-auto max-w-2xl leading-relaxed'>
                     Chatbot.AI is built on a foundation of privacy and control. It's designed to be transparent, secure and easy to use.
                 </p>
             </div>
