@@ -8,6 +8,13 @@
       "when": 1770824647402,
       "tag": "0000_gorgeous_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771063392315,
+      "tag": "0001_fancy_the_initiative",
+      "breakpoints": true
     }
   ]
 }
