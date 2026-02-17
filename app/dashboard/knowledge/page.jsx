@@ -16,8 +16,44 @@ const page = () => {
         setIsOpen(true)
     }
     const handelImportSource = async (params) => {
+        setKnowdledegeStoringLoader(true)
+        try {
+            let response
 
+            if (params.type === "file" && params.file) {
+                const formData = new FormData()
+                formData.append("file", params.file)
+                formData.append("type", params.type)
+
+                response = await fetch("/api/knowledge/store", {
+                    method: "POST",
+                    body: formData
+                })
+            } else {
+                response = await fetch("/api/knowledge/store", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(params)
+                })
+            }
+
+            if (!response.ok) {
+                throw new Error("Failed to store")
+            }
+
+            const res = await fetch("/api/knowledge/fetch")
+            const newData = await res.json()
+
+            setKnowledgeSource(newData.sources) // 🔥 you also had wrong setter here
+            setIsOpen(false)
+
+        } catch (error) {
+            console.log(error)
+        } finally {
+            setKnowdledegeStoringLoader(false)
+        }
     }
+
     return (
         <div className='p-6 md:p-8 space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500'>
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>

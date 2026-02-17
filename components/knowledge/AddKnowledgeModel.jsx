@@ -14,6 +14,81 @@ const AddKnowledgeModel = ({ isOpen, setIsOpen, defaultTab, setDefaultTab, onImp
     const [docsContent, setDocsContent] = useState("")
     const [uploadFile, setUploadFile] = useState(null)
     const [error, setError] = useState(null)
+    const handelFileChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Correct 10MB check
+            if (file.size > 10 * 1024 * 1024) {
+                setError("File size should be less than 10MB");
+                return;
+            }
+            if (!file.name.endsWith(".csv") && file.type !== "text/csv") {
+                setError("Please upload a valid CSV file");
+                return;
+            }
+        }
+        setUploadFile(file);
+        setError(null);
+    }
+    const validUrl = (url) => {
+        try {
+            const parsed = new URL(url)
+            return ["http:", "https:"].includes(parsed.protocol)
+        } catch (error) {
+            return false
+        }
+    }
+
+
+    const handelImportWrapper = async () => {
+        const error = null
+        const data = { type: defaultTab }
+        if (defaultTab === "website") {
+            if (!websiteUrl) {
+                setError("Website URL is required")
+                return
+            }
+            if (!validUrl(websiteUrl)) {
+                setError("Invalid Website URL")
+                return
+            }
+            const normalizeInput = websiteUrl.replace(/\s+/g, " ")
+            const exists = existingSource.some((source) => {
+                if (source.type !== "website" || !source.source_url) return false
+                const normalizedUrl = source.source_url.replace(/\s+/g, " ")
+                return normalizedUrl === normalizeInput
+            })
+            if (exists) {
+                setError("Website URL already exists")
+                return
+            }
+            data.source_url = websiteUrl
+        } else if (defaultTab === "text") {
+            if (!docsTitle.trim()) {
+                setError("Title is required")
+                return
+            }
+            if (!docsContent.trim()) {
+                setError("Content is required")
+                return
+            }
+            data.title = docsTitle.trim()
+            data.content = docsContent.trim()
+        } else if (defaultTab === "file") {
+            if (!uploadFile) {
+                setError("File is required")
+                return
+            }
+            data.file = uploadFile
+        }
+        await onImport(data)
+        setWebsiteUrl("")
+        setDocsTitle("")
+        setDocsContent("")
+        setUploadFile(null)
+        setError(null)
+        setIsOpen(false)
+    }
     return (
         <Dialog
             open={isOpen}
@@ -94,26 +169,7 @@ const AddKnowledgeModel = ({ isOpen, setIsOpen, defaultTab, setDefaultTab, onImp
                                 id="csv-file-input"
                                 accept=".csv,text/csv"
                                 className="hidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-
-                                    if (file) {
-                                        // ✅ Correct 10MB check
-                                        if (file.size > 10 * 1024 * 1024) {
-                                            setError("File size should be less than 10MB");
-                                            return;
-                                        }
-
-                                        if (!file.name.endsWith(".csv") && file.type !== "text/csv") {
-                                            setError("Please upload a valid CSV file");
-                                            return;
-                                        }
-                                    }
-
-                                    setUploadFile(file);
-                                    setError(null);
-                                }}
-                            />
+                                onChange={handelFileChange} />
 
                             <div onClick={() => document.getElementById("csv-file-input")?.click()}
                                 className="group cursor-pointer border-2 border-dashed border-zinc-700 hover:border-zinc-500 transition-all duration-300 rounded-2xl h-60 flex items-center justify-center  bg-zinc-900/40 hover:bg-zinc-800/60 backdrop-blur-md">
@@ -134,7 +190,7 @@ const AddKnowledgeModel = ({ isOpen, setIsOpen, defaultTab, setDefaultTab, onImp
                     </div>
                     <div className='p-6 border-t border-white/5  bg-blak/20 flex justify-end gap-3'>
                         <Button variant='ghost' onClick={() => setIsOpen(false)} className="text-zinc-400 hover-text-white  hover:bg-white/5 ">Cancel</Button>
-                        <Button className={`bg-white min-w-[110px] text-black hover:bg-zinc-200 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}>{isLoading ? (<Loader2Icon className='w-4 h-4 mr-2 animate-spin' />) : "Add Knowledge"}</Button>
+                        <Button onClick={handelImportWrapper} className={`bg-white min-w-[110px] text-black hover:bg-zinc-200 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}>{isLoading ? (<Loader2Icon className='w-4 h-4 mr-2 animate-spin' />) : "Add Knowledge"}</Button>
                     </div>
                 </Tabs>
             </DialogContent>
@@ -142,4 +198,5 @@ const AddKnowledgeModel = ({ isOpen, setIsOpen, defaultTab, setDefaultTab, onImp
     )
 }
 
-export default AddKnowledgeModel
+
+export default AddKnowledgeModel  
