@@ -1,5 +1,6 @@
 export const runtime = "nodejs"
-
+import { db } from "@/db/client"
+import { knowledge_source } from "@/db/schema"
 import { isAuthorized } from "@/lib/isAuthorized"
 import { summarizedMarkDown } from "@/lib/openAi"
 import { NextResponse } from "next/server"
@@ -20,15 +21,32 @@ export async function POST(req) {
 
             if (type === "file") {
                 const file = formData.get("file")
-                if (!file) return NextResponse.json({ error: "File is required" }, { status: 400 })
-
+                type = formData.get("type")
+                if (!file) {
+                    return NextResponse.json({ error: "File is required" }, { status: 400 })
+                }
                 const fileContent = await file.text()
-                console.log("Raw file content preview:", fileContent.slice(0, 500))
-
+                const line = fileContent.split("\n").filter((line) => line.trim() !== "")
+                const headers = line[0]?.split(",").map((h) => h.trim())
+                let formatedContent = ""
                 const markdown = await summarizedMarkDown(fileContent)
-                console.log("Summarized Markdown Response:", markdown)
+                formatedContent = markdown
 
-                return NextResponse.json({ success: true, markdown }, { status: 200 })
+                await db.insert(knowledge_source).values({
+                    user_email: user.email,
+                    type: "file",
+                    name: file.name,
+                    status: "active",
+                    source_url: file.name,
+                    content: formatedContent,
+                    meta_data: JSON.stringify({
+                        file_name: file.name,
+                        file_size: file.size,
+                        rowCount: line.length - 1,
+                        headers: headers,
+                    }),
+                })
+                return NextResponse.json({ success: true }, { status: 200 })
             }
         } else {
             body = await req.json()
@@ -53,11 +71,32 @@ export async function POST(req) {
                 return NextResponse.json({ error: "ZenRows failed", status: res.status, body: html?.slice(0, 500), }, { status: 502 })
             }
             const markdown = await summarizedMarkDown(html)
-            console.log(markdown);
+            await db.insert(knowledge_source).values({
+                user_email: user.email,
+                type: "website",
+                name: body.source_url,
+                status: "active",
+                source_url: body.source_url,
+                content: markdown,
+            })
 
-            return NextResponse.json({ success: true }, { status: 200 })
+        } else if (type === "text") {
+            let content = body.content
+            if (body.content.length > 500) {
+                const markdown = await summarizedMarkDown(body.content)
+                content = markdown
+            }
+            await db.insert(knowledge_source).values({
+                user_email: user.email,
+                type: "text",
+                name: body.title,
+                status: "active",
+                content: content,
+            })
+
         }
-        return NextResponse.json({ error: "Invalid type" }, { status: 400 })
+        return NextResponse.json({ success: true }, { status: 200 })
+
     } catch (error) {
         console.error("Knowledge store error:", error)
         return NextResponse.json(

@@ -1,9 +1,11 @@
 "use client"
+import KnowledgeTable from '@/components/knowledge/KnowledgeTable'
 import AddKnowledgeModel from '@/components/knowledge/AddKnowledgeModel'
 import QuickAction from '@/components/knowledge/QuickAction'
 import { Button } from '@/components/ui/button'
 import { PlusIcon } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import SourceDetailSheet from '@/components/knowledge/SourceDetailSheet'
 
 const page = () => {
     const [defaultTab, setDefaultTab] = useState("website")
@@ -11,6 +13,8 @@ const page = () => {
     const [knowdledegeStoringLoader, setKnowdledegeStoringLoader] = useState(false)
     const [knowdledegeSourceLoader, setKnowdledegeSourceLoader] = useState(true)
     const [KnowledgeSource, setKnowledgeSource] = useState([])
+    const [selectedSource, setSelectedSource] = useState(null)
+    const [sheetOpen, setSheetOpen] = useState(false)
     const openModel = (tab) => {
         setDefaultTab(tab)
         setIsOpen(true)
@@ -53,6 +57,21 @@ const page = () => {
             setKnowdledegeStoringLoader(false)
         }
     }
+    const handleSourceClick = (source) => {
+        setSelectedSource(source)
+        setSheetOpen(true)
+    }
+    useEffect(() => {
+        const fetchKnowledgeSource = async () => {
+            const res = await fetch("/api/knowledge/fetch")
+            const data = await res.json()
+            setKnowledgeSource(data.sources)
+            console.log(data.sources);
+
+            setKnowdledegeSourceLoader(false)
+        }
+        fetchKnowledgeSource()
+    }, [])
 
     return (
         <div className='p-6 md:p-8 space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500'>
@@ -72,9 +91,11 @@ const page = () => {
                 </div>
             </div>
             <QuickAction onOpenModel={openModel} />
+            <KnowledgeTable source={KnowledgeSource} onSourceClick={handleSourceClick} isLoading={knowdledegeSourceLoader} />
             <AddKnowledgeModel isOpen={isOpen} setIsOpen={setIsOpen} defaultTab={defaultTab}
                 setDefaultTab={setDefaultTab} onImport={handelImportSource}
                 isLoading={knowdledegeStoringLoader} existingSource={KnowledgeSource} />
+            <SourceDetailSheet open={sheetOpen} setOpen={setSheetOpen} source={selectedSource} />
         </div>
     )
 }

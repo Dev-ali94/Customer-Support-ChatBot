@@ -15,6 +15,13 @@
       "when": 1771063392315,
       "tag": "0001_fancy_the_initiative",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771404499627,
+      "tag": "0002_plain_wendigo",
+      "breakpoints": true
     }
   ]
 }
