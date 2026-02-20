@@ -1,11 +1,13 @@
 "use client"
 import SectionFormField from '@/components/sections/SectionFormField'
+import SectionsTabel from '@/components/sections/SectionsTabel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Plus } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
+
 
 const page = () => {
     const [sheetOpen, setSheetOpen] = useState(false)
@@ -21,7 +23,8 @@ const page = () => {
         description: '',
         tone: 'neutral',
         allowedTopics: '',
-        blockedTopics: ''
+        blockedTopics: '',
+        fallbackbehavior: ""
     })
     const handleCreateSection = () => {
         setSelectedSection({
@@ -79,6 +82,7 @@ const page = () => {
             setIsLoadingSection(true)
             const res = await fetch("/api/sections/fetch")
             const data = await res.json()
+
             const transformSection = data.sections.map((section) => ({
                 id: section.id,
                 name: section.name,
@@ -91,12 +95,28 @@ const page = () => {
                 scopeLabel: section.allowed_topics || "general",
                 status: section.status
             }))
+            setSection(transformSection)
         } catch (error) {
             console.log(error);
             toast.error("Failed to fetch sections")
         } finally {
             setIsLoadingSection(false)
         }
+    }
+    const handlePreviewSection = (section) => {
+        setSelectedSection(section)
+
+        setFormData({
+            name: section.name || "",
+            description: section.description || "",
+            tone: section.tone || "neutral",
+            allowedTopics: section.allowedTopics || "",
+            blockedTopics: section.blockedTopics || "",
+            fallbackbehavior: "escalate"
+        })
+
+        setSelectedSource(section.source_ids || [])
+        setSheetOpen(true)
     }
     const isPreviewMode = selectedSection?.id !== "new"
     useEffect(() => {
@@ -108,10 +128,29 @@ const page = () => {
             setIsLoadingSection(false)
         }
         fetchKnowledgeSource()
-    }, [])
-    useEffect(() => {
         fetchSections()
     }, [])
+    const handleDeleteSection = async () => {
+        if (!selectedSection || selectedSection.id === "new") return
+        try {
+            setIsSaving(true)
+            const response = await fetch("/api/sections/delete", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: selectedSection.id })
+            })
+            toast.success("section deleted successfully.")
+
+            await fetchSections()
+            setSheetOpen(false)
+            setSelectedSection(null)
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to delete section")
+        } finally {
+            setIsSaving(false)
+        }
+    }
 
     return (
         <>
@@ -129,7 +168,7 @@ const page = () => {
                 </div>
                 <Card className="border-white/5 bg-[#0a0a0E]">
                     <CardContent className="p-0">
-
+                        <SectionsTabel sections={section} isLoading={isLoadingSection} onPreview={handlePreviewSection} onCreateSection={handleCreateSection} />
                     </CardContent>
                 </Card>
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -166,7 +205,7 @@ const page = () => {
                                     <div className='p-6 bg-red-500/5 border-t border-red-500/10'>
                                         <h5 className='text-xs font-medium text-red-400 mb-1'>Danger Zone</h5>
                                         <p className='text-xs text-red-500/70 mb-3'>Deleting the section remove all assciated routing rules.</p>
-                                        <Button variant='destructive' className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/30">{isSaving ? "Deleting...." : "Delete"}</Button>
+                                        <Button onClick={handleDeleteSection} variant='destructive' className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/30">{isSaving ? "Deleting...." : "Delete"}</Button>
                                     </div>
                                 )}
                             </>
