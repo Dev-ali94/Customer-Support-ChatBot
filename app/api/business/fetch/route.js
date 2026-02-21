@@ -1,9 +1,9 @@
 import { db } from "@/db/client";
-import { businessDetail } from "@/db/schema";
 import { isAuthorized } from "@/lib/isAuthorized";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { businessDetail } from "@/db/schema";
 
 
 export async function GET(req) {
