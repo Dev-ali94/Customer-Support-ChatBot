@@ -59,7 +59,7 @@ const ChatSimulator = ({
                                         "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-white/5",
                                         message.role === "user" ? "bg-zinc-800" : "text-white"
                                     )}
-                                    style={message.role === "user" ? { backgroundColor: primaryColor } : {}}
+                                    style={message.role === "user" ? {} : { backgroundColor: primaryColor }}
                                 >
                                     {message.role === "user"
                                         ? <User className='w-4 h-4 text-zinc-400' />
