@@ -55,4 +55,15 @@ export const chatbotData = pgTable("chatbot_data", {
     created_at: text("created_at").default(sql`now()`)
 })
 
+export const team_member = pgTable("team_member", {
+    id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+    user_email: text("user_email").notNull(),
+    name: text("name").notNull(),
+    organization_id: text("organization_id").notNull(),
+    role: text("role").notNull().default("member"),
+    status: text("status").notNull().default("active"),
+    created_at: text("created_at").default(sql`now()`)
+
+})
+
 

@@ -127,7 +127,6 @@ const ChatSimulator = ({
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        disabled={!activeSection}
                         placeholder={activeSection ? "Type your message..." : "Select a section to start"}
                         className="min-h-[60px] max-h-[160px] outline-none text-white bg-zinc-900/50 border-white/10 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed -mb-5"
                     />
