@@ -1,5 +1,7 @@
 "use client"
 import TeamSection from '@/components/settings/TeamSection'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import React, { useEffect, useState } from 'react'
@@ -55,6 +57,66 @@ const page = () => {
                 </CardContent>
             </Card>
             <TeamSection />
+            <Card className="border-red-500/20 bg-red-500/5">
+                <CardHeader>
+                    <CardTitle className="text-base font-semibold text-red-500">
+                        Danger Zone
+                    </CardTitle>
+                    <CardDescription className="text-red-400/70">
+                        Be careful when using these features
+                    </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                    <div className="flex items-center justify-between gap-6 rounded-lg border border-red-500/10 bg-black/30 p-4">
+
+                        {/* Left Side */}
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-zinc-200">
+                                Delete Workspace
+                            </p>
+                            <p className="text-xs text-zinc-500 max-w-md">
+                                Permanently delete your workspace and all of its data.
+                                This action cannot be undone.
+                            </p>
+                        </div>
+
+                        {/* Right Side */}
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="destructive"
+                                    className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20"
+                                >
+                                    Delete
+                                </Button>
+                            </AlertDialogTrigger>
+
+                            <AlertDialogContent className="bg-zinc-900 border border-red-500/20">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-white">
+                                        Are you absolutely sure?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-zinc-400">
+                                        This action cannot be undone. This will permanently delete your
+                                        workspace and remove all associated data from our servers.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel className="bg-zinc-800 text-zinc-300 hover:bg-zinc-700">
+                                        Cancel
+                                    </AlertDialogCancel>
+
+                                    <AlertDialogAction className="bg-red-500 hover:bg-red-600">
+                                        Delete Workspace
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     )
 }
