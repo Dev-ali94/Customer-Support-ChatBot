@@ -1,6 +1,6 @@
-import scalekit from "@/lib/scalekit";
-import crypto from "crypto";
 import { NextResponse } from "next/server";
+import crypto from "crypto";
+import scalekit from "@/lib/scalekit";
 
 export async function GET() {
   try {
@@ -8,34 +8,32 @@ export async function GET() {
 
     const redirectUrl = process.env.SCALEKIT_REDIRECT_URL;
 
-    const options = {
+    const authUrl = scalekit.getAuthorizationUrl(redirectUrl, {
       scopes: ["openid", "profile", "email", "offline_access"],
       state,
-    };
-
-    const authUrl = scalekit.getAuthorizationUrl(redirectUrl, options);
-
-    // Create response first
-    const response = NextResponse.redirect(authUrl);
-
-    // Set cookie on the response
-    response.cookies.set("sk_state", state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 10, // 10 minutes
     });
 
     console.log("Generated state:", state);
 
+    const response = NextResponse.redirect(authUrl);
+
+    response.cookies.set({
+      name: "sk_state",
+      value: state,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 10,
+    });
+
     return response;
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
 
     return NextResponse.json(
       {
-        error: error.message,
+        error: err.message,
       },
       {
         status: 500,

@@ -1,6 +1,6 @@
 import scalekit from "@/lib/scalekit";
-import { user as User } from "@/db/schema";
 import { db } from "@/db/client";
+import { user as User } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -10,34 +10,33 @@ export async function GET(req) {
     const { searchParams } = req.nextUrl;
 
     const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const returnedState = searchParams.get("state");
 
     const cookieStore = await cookies();
     const savedState = cookieStore.get("sk_state")?.value;
 
-    console.log("Returned State:", state);
+    console.log("Returned State:", returnedState);
     console.log("Saved State:", savedState);
+    console.log("All Cookies:", cookieStore.getAll());
 
     if (!code) {
       return NextResponse.json(
-        {
-          error: "Missing authorization code",
-        },
-        {
-          status: 400,
-        }
+        { error: "Missing authorization code" },
+        { status: 400 }
       );
     }
 
-    // Validate state
-    if (!savedState || savedState !== state) {
+    if (!savedState) {
       return NextResponse.json(
-        {
-          error: "Invalid state",
-        },
-        {
-          status: 401,
-        }
+        { error: "sk_state cookie not found" },
+        { status: 401 }
+      );
+    }
+
+    if (savedState !== returnedState) {
+      return NextResponse.json(
+        { error: "Invalid state" },
+        { status: 401 }
       );
     }
 
@@ -60,12 +59,8 @@ export async function GET(req) {
 
     if (!organizationId) {
       return NextResponse.json(
-        {
-          error: "Organization ID not found",
-        },
-        {
-          status: 401,
-        }
+        { error: "Organization ID not found" },
+        { status: 401 }
       );
     }
 
@@ -85,39 +80,34 @@ export async function GET(req) {
 
     const response = NextResponse.redirect(new URL("/", req.url));
 
-    response.cookies.set(
-      "user_session",
-      JSON.stringify({
+    response.cookies.set({
+      name: "user_session",
+      value: JSON.stringify({
         email: user.email,
         organization_id: organizationId,
       }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      }
-    );
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
 
-    // Remove state cookie after successful login
     response.cookies.delete("sk_state");
 
     return response;
-  } catch (error) {
-    console.error("ScaleKit Error:", error);
+  } catch (err) {
+    console.error("ScaleKit Error:", err);
 
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error("Data:", error.response.data);
-    }
+    console.error("Status:", err?.response?.status);
+    console.error("Data:", err?.response?.data);
 
     return NextResponse.json(
       {
-        error: error.response?.data || error.message,
+        error: err?.response?.data || err.message,
       },
       {
-        status: error.response?.status || 500,
+        status: err?.response?.status || 500,
       }
     );
   }
