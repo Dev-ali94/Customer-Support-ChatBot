@@ -16,7 +16,7 @@ export async function GET(request) {
 
     response.cookies.set("sk_state", state, {
       httpOnly: true,
-      secure: origin.startsWith("https:"),
+      secure: process.env.NODE_ENV === "development" ? false : true,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 10,
