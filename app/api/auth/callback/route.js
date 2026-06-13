@@ -30,7 +30,7 @@ export async function GET(req) {
       );
     }
 
-    const redirectUrl = process.env.SCALEKIT_REDIRECT_URL;
+    const redirectUrl = `${req.nextUrl.origin}/api/auth/callback`;
 
     const authResult = await scalekit.authenticateWithCode(
       code,
