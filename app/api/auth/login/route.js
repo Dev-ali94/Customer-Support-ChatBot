@@ -5,9 +5,7 @@ import scalekit from "@/lib/scalekit";
 export async function GET(request) {
   try {
     const state = crypto.randomBytes(16).toString("hex");
-
-    const origin = new URL(request.url).origin;
-    const redirectUrl = `${origin}/api/auth/callback`;
+    const redirectUrl = process.env.SCALEKIT_REDIRECT_URL;
 
     const authUrl = scalekit.getAuthorizationUrl(redirectUrl, {
       scopes: ["openid", "profile", "email", "offline_access"],
