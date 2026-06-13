@@ -13,13 +13,9 @@ export async function GET() {
       state,
     });
 
-    console.log("Generated state:", state);
-
     const response = NextResponse.redirect(authUrl);
 
-    response.cookies.set({
-      name: "sk_state",
-      value: state,
+    response.cookies.set("sk_state", state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -27,17 +23,15 @@ export async function GET() {
       maxAge: 60 * 10,
     });
 
+    console.log("Generated state:", state);
+
     return response;
   } catch (err) {
     console.error(err);
 
     return NextResponse.json(
-      {
-        error: err.message,
-      },
-      {
-        status: 500,
-      }
+      { error: err.message },
+      { status: 500 }
     );
   }
 }
