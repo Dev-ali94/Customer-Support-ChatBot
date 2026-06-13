@@ -16,11 +16,11 @@ export async function GET(request) {
 
     response.cookies.set("sk_state", state, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 10,
     });
-
     console.log("Generated state:", state);
 
     return response;
