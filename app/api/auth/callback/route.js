@@ -37,7 +37,20 @@ export async function GET(req) {
       redirectUrl
     );
 
-    return NextResponse.json(authResult);
+    const dashboardUrl = new URL("/dashboard", req.url);
+    const response = NextResponse.redirect(dashboardUrl);
+
+    response.cookies.set("user_session", JSON.stringify(authResult.user), {
+      httpOnly: true,
+      secure: req.nextUrl.protocol === "https:",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    response.cookies.delete("sk_state");
+
+    return response;
   } catch (err) {
     console.error(err);
 
