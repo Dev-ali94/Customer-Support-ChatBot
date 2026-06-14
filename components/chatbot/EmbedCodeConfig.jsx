@@ -7,7 +7,7 @@ const EmbedCodeConfig = ({ chatBotId }) => {
     const [codeCopy, setCodeCopy] = useState(false)
     const handleCopyCode = () => {
         setCodeCopy(true)
-        navigator.clipboard.writeText(`<script src="http://localhost:5173/widgest.js" data-id="${chatBotId}" defer></script>`)
+        navigator.clipboard.writeText(`<script src="http://localhost:3000/widget.js" data-id="${chatBotId}" defer></script>`)
         setTimeout(() => {
             setCodeCopy(false)
         }, 2000)
@@ -25,7 +25,7 @@ const EmbedCodeConfig = ({ chatBotId }) => {
                     <div className='bg-[#050509] border border-white/10 rounded-lg p-3 overflow-hidden'>
                         <code className='text-sm text-zinc-400 font-mono block overflow-auto w-full'>
                             <div className='flex flex-col'>
-                                <span>{`<script src="http://localhost:5173/widgest.js"`}</span>
+                                <span>{`<script src="http://localhost:3000/widget.js"`}</span>
                                 <span>{`data-id="${chatBotId}" defer>`}</span>
                                 <span>{`</script>`}</span>
                             </div>

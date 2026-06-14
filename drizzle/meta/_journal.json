@@ -43,6 +43,13 @@
       "when": 1771836597858,
       "tag": "0005_soft_spitfire",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781362027852,
+      "tag": "0006_uneven_pyro",
+      "breakpoints": true
     }
   ]
 }

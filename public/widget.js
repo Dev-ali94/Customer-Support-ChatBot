@@ -2,8 +2,8 @@
     try {
         const script = document.currentScript
         if (!script) return
-        const widgestId = script.getAttribute("data-id")
-        if (!widgestId) {
+        const widgetId = script.getAttribute("data-id")
+        if (!widgetId) {
             console.error("No ChatBot.Ai data-id");
         }
         fetch("http://localhost:3000/api/widget/session", {
@@ -11,16 +11,17 @@
             headers: { "Content-Type": "application/json" },
             credentials: "omit",
             body: JSON.stringify({
-                widget_id: widgestId
+                widget_id: widgetId
             })
         }).then(function (res) {
             if (!res.ok) throw new Error("Session request failed");
+            return res.json()
         }).then(function (data) {
-            if (!data || data.token) {
+            if (!data || !data.token) {
                 throw new Error("Invalid session request");
             }
             const iframe = document.createElement("iframe")
-            iframe.src = "http://localhost:3000/api/embed?token=" + encodeURIComponent(data.token)
+            iframe.src = "http://localhost:3000/embed?token=" + encodeURIComponent(data.token)
             iframe.setAttribute("title", "support chat")
             iframe.style.position = "fixed"
             iframe.style.bottom = "20px"
