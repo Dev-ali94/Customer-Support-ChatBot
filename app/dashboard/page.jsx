@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import OnBoarding from '@/components/dashboard/OnBoarding'
 import { Loader2Icon } from 'lucide-react'
+import DashboardOverview from '@/components/dashboard/DashboardOverview'
 
 const Page = () => {
     const [businessDetailAvilable, setBusinessDetailAvilable] = useState(false)
@@ -23,13 +24,13 @@ const Page = () => {
         )
     }
     return (
-        <div className='flex flex-1 w-full'>
+        <div className='flex-1 w-full'>
             {!businessDetailAvilable ? (
                 <div className="flex items-center justify-center w-full p-4 min-h-screen">
                     <OnBoarding />
                 </div>
             ) : (
-                <> hellow world</>
+                <DashboardOverview />
             )}
 
         </div>

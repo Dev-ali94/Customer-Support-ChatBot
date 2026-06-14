@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { AlertCircle, Check, Code, Copy, Save } from 'lucide-react'
+import { AlertCircle, Check, Code, Copy } from 'lucide-react'
 import { Button } from '../ui/button'
 
 const EmbedCodeConfig = ({ chatBotId }) => {
