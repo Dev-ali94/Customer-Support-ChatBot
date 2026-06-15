@@ -19,11 +19,10 @@ export async function POST(req) {
     try {
         const secret = new TextEncoder().encode(process.env.JWT_SECRET)
         const { payload } = await jwtVerify(token, secret)
+        console.log(payload);
+        
         sessionId = payload.sessionId
         widgetId = payload.widget_id
-        console.log(sessionId);
-        console.log(widgetId);
-
 
         if (!widgetId || !sessionId) {
             throw new Error("Ivalid payload")
@@ -40,8 +39,13 @@ export async function POST(req) {
     try {
         const [existingConv] = await db.select().from(conversation).where(eq(conversation.id, sessionId)).limit(1)
         if (!existingConv) {
-            const forwardedFor = req.headers.get("x-forwarded-for")
-            const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "UnKnown IP"
+         const forwardedFor = req.headers.get("x-forwarded-for");
+
+const ip = forwardedFor
+  ? forwardedFor.split(",")[0].trim()
+  : req.headers.get("x-real-ip") ||
+    req.headers.get("cf-connecting-ip") ||
+    "Unknown";
             const visitorName = `#Visitor(${ip})`
             await db.insert(conversation).values({
                 id: sessionId,
