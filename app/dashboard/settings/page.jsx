@@ -1,5 +1,4 @@
 "use client"
-import TeamSection from '@/components/settings/TeamSection'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -56,7 +55,6 @@ const page = () => {
                     </div>
                 </CardContent>
             </Card>
-            <TeamSection />
             <Card className="border-red-500/20 bg-red-500/5">
                 <CardHeader>
                     <CardTitle className="text-base font-semibold text-red-500">
