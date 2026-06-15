@@ -174,78 +174,155 @@ const page = () => {
         }
     }
     return (
-        <div className='flex flex-col h-screen bg-[#0A0A0E] overflow-hidden shadow-2xl'>
-            <div className='h-15 border-b border-white/5 flex items-center justify-between px-4 bg-[#0E0E12] shadow-xl shrink-0 z-20'>
-                <div className='flex items-center gap-3'>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>
-                        <Bot className="w-4 h-4" />
-                    </div>
-                    <div className='flex flex-col items-start justify-center mt-2 gap-1'>
-                        <h1 className='text-sm font-semibold text-white leading-none'>Support</h1>
-                        <span className='text-[11px] text-gray-400/90 font-medium'>Online</span>
-                    </div>
-                </div>
-                <button onClick={toggleOpen} aria-label='Minimize Chat' className='p-2 text-zinc-400 hover:bg-white/20 rounded-lg transition-colors'>
-                    <ChevronDown className='w-4 h-4' />
-                </button>
+ <div className="flex flex-col h-screen bg-[#0A0A0E] overflow-hidden shadow-2xl">
+    {/* Header */}
+    <div className="h-15 border-b border-white/5 flex items-center justify-between px-4 bg-[#0E0E12] shadow-xl shrink-0 z-20">
+        <div className="flex items-center gap-3">
+            <div
+                className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: primaryColor }}
+            >
+                <Bot className="w-5 h-5" />
             </div>
-            <div className='flex min-h-0 overflow-y-auto bg-zinc-950/30 p-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent'>
-                <div className='space-y-6 pb-4'>
-                    {message.map((msg, index) => (
-                        <div key={index} className={cn("flex w-full flex-col", msg.role === "user" ? "items-end" : "items-start")}>
-                            <div className={cn("flex max-w-[85%] gap-3", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-                                {msg.role !== "user" && (
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>
-                                        <Bot className="w-4 h-4" />
-                                    </div>
-                                )}
-                                <div className='space-y-2'>
-                                    <div className={cn("p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm", msg.role === "user" ? "bg-zinc-800 text-bg-zinc-100 rounded-tr-sm" : "bg-white text-zinc-900 rounded-tl-sm")}>
-                                        {msg.content}
-                                    </div>
-                                    {msg.isWelcome && sections.length > 0 && (
-                                        <div className='flex flex-wrap gap-2 pt-1 ml-1 animate-in fade-in slide-in-from-top-1 duration-400'>
-                                            {sections.map((section) => (
-                                                <button
-                                                    key={section.id}
-                                                    onClick={() => handelSectionClick(section.name)}
-                                                    className='px-3 py-1.5 rounded-full border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700  hover:border-zinc-600 text-xs font-medium transition-all'
-                                                >
-                                                    {section.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className='p-4 bg-[#0a0a0e] border-t border-white/5 shrink-0 z-20'>
-                <div className='relative'>
-                    <Textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handelKeyDown}
-                        disabled={!activeSection}
-                        placeholder={activeSection ? "Type a message....." : "Select a topic above......"}
-                        className="min-h-50px max-h-120px pr-20 outline-none text-white bg-zinc-900/50 border-white/10 resize-none rounded-xl disabled:opacity-70 disabled:cursor-not-allowed placeholder:text-zinc-600 focus:ring-1 focus:ring-white/10"
-                    />
-                    <Button
-                        size='icon'
-                        onClick={handleSend}
-                        disabled={!activeSection || !input.trim()}
-                        className={cn("absolute -bottom-1 right-2 h-8 w-8 transition-colors",
-                            (!activeSection || !input.trim()) ? "bg-zinc-800 text-zinc-500" : ""
-                        )}
-                        style={activeSection && input.trim() ? { backgroundColor: primaryColor, color: "white" } : {}}
-                    >
-                        <Send className='w-4 h-4' />
-                    </Button>
-                </div>
+
+            <div className="flex flex-col items-start justify-center mt-2 gap-1">
+                <h1 className="text-sm font-semibold text-white leading-none">
+                    Support
+                </h1>
+                <span className="text-[11px] text-gray-400/90 font-medium">
+                    Online
+                </span>
             </div>
         </div>
+
+        <button
+            onClick={toggleOpen}
+            aria-label="Minimize Chat"
+            className="p-2 text-zinc-400 hover:bg-white/20 rounded-lg transition-colors"
+        >
+            <ChevronDown className="w-4 h-4" />
+        </button>
+    </div>
+
+    {/* Messages */}
+    <div className="flex-1 overflow-y-auto bg-zinc-950/30 p-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="flex flex-col gap-6">
+            {message.map((msg, index) => (
+                <div
+                    key={index}
+                    className={cn(
+                        "flex w-full flex-col",
+                        msg.role === "user" ? "items-end" : "items-start"
+                    )}
+                >
+                    <div
+                        className={cn(
+                            "flex max-w-[85%] gap-3",
+                            msg.role === "user"
+                                ? "flex-row-reverse"
+                                : "flex-row"
+                        )}
+                    >
+                        {msg.role !== "user" && (
+                            <div
+                                className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                <Bot className="w-5 h-5" />
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <div
+                                className={cn(
+                                    "p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words",
+                                    msg.role === "user"
+                                        ? "bg-zinc-800 text-zinc-100 rounded-tr-sm"
+                                        : "bg-white text-zinc-900 rounded-tl-sm"
+                                )}
+                            >
+                                {msg.content}
+                            </div>
+
+                            {msg.isWelcome && sections.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pt-1 ml-1 animate-in fade-in slide-in-from-top-1 duration-400">
+                                    {sections.map((section) => (
+                                        <button
+                                            key={section.id}
+                                            onClick={() =>
+                                                handelSectionClick(section.name)
+                                            }
+                                            className="px-3 py-1.5 rounded-full border border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700 hover:border-zinc-600 text-xs font-medium transition-all"
+                                        >
+                                            {section.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+
+    {/* Input */}
+    <div className="shrink-0 border-t border-white/5 bg-[#0A0A0E] p-4">
+        <div className="relative">
+            <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handelKeyDown}
+                disabled={!activeSection}
+                placeholder={
+                    activeSection
+                        ? "Type a message..."
+                        : "Select a topic above..."
+                }
+                className="
+                    min-h-[52px]
+                    max-h-[120px]
+                    w-full
+                    resize-none
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-zinc-900/50
+                    py-3
+                    pl-4
+                    pr-16
+                    text-sm
+                    text-white
+                    placeholder:text-zinc-500
+                    outline-none
+                    focus:ring-1
+                    focus:ring-indigo-500
+                    disabled:cursor-not-allowed
+                    disabled:opacity-70
+                "
+            />
+
+          <Button
+  size="icon"
+  onClick={handleSend}
+  disabled={!activeSection || !input.trim()}
+  className={cn(
+    "absolute right-3 bottom-2 flex h-9 w-9 items-center justify-center rounded-lg transition-all",
+    !activeSection || !input.trim()
+      ? "bg-zinc-700 text-zinc-400"
+      : "text-white"
+  )}
+  style={
+    activeSection && input.trim()
+      ? { backgroundColor: primaryColor }
+      : {}
+  }
+>
+  <Send className="h-4 w-4" />
+</Button>
+        </div>
+    </div>
+</div>
     )
 }
 
