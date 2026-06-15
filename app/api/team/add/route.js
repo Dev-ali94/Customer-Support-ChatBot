@@ -18,7 +18,7 @@ export async function POST(req) {
     if (!email || !name) {
       return NextResponse.json(
         { error: "All fields are required" },
-        { status: 400 }
+        { status: 401}
       );
     }
 
@@ -31,7 +31,7 @@ export async function POST(req) {
     if (existingInvite.length > 0) {
       return NextResponse.json(
         { error: "Invitation already sent to this user" },
-        { status: 400 }
+        { status: 402}
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(req) {
     if (!user.organization_id) {
       return NextResponse.json(
         { error: "Missing organization ID" },
-        { status: 400 }
+        { status: 403 }
       );
     }
 
