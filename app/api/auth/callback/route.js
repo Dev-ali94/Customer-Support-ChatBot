@@ -56,7 +56,7 @@ export async function POST(req) {
           error: "User already invited",
           email,
         },
-        { status: 400 }
+        { status: 401 }
       );
     }
 
