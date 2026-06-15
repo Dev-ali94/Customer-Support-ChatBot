@@ -7,14 +7,12 @@ export async function GET(request) {
     const state = crypto.randomBytes(16).toString("hex");
     const origin = new URL(request.url).origin;
     const redirectUrl = `${origin}/api/auth/callback`;
-
     const authUrl = scalekit.getAuthorizationUrl(redirectUrl, {
       scopes: ["openid", "profile", "email", "offline_access"],
       state,
     });
 
     const response = NextResponse.redirect(authUrl);
-
     response.cookies.set("sk_state", state, {
       httpOnly: true,
       secure: origin.startsWith("https:"),
@@ -22,15 +20,9 @@ export async function GET(request) {
       path: "/",
       maxAge: 60 * 10,
     });
-    console.log("Generated state:", state);
-
     return response;
-  } catch (err) {
-    console.error(err);
-
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("Internal server error on login user",error);
+    return NextResponse.json({ error: error.message },{ status: 500 })
   }
 }

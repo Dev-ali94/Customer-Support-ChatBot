@@ -1,59 +1,88 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import scalekit from "@/lib/scalekit";
 import { db } from "@/db/client";
-import { user as userTable } from "@/db/schema";
+import { team_member } from "@/db/schema";
+import { isAuthorized } from "@/lib/isAuthorized";
+import scalekit from "@/lib/scalekit";
 import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
-export async function GET(req) {
+export async function POST(req) {
   try {
-    const { searchParams } = req.nextUrl;
-    const code = searchParams.get("code");
-    const returnedState = searchParams.get("state");
-    const cookieStore = await cookies();
-    const savedState = cookieStore.get("sk_state")?.value;
-    if (savedState && savedState !== returnedState) {
-      return NextResponse.json({ error: "Invalid state" }, { status: 401 });
-    }
-    const redirectUrl = `${req.nextUrl.origin}/api/auth/callback`;
-    const authResult = await scalekit.authenticateWithCode(code,redirectUrl);
-    const {user,idToken} = authResult;
-    const claims = await scalekit.validateToken(idToken)
-    const organizationId = claims.organization_id || claims.org_id || claims.oid || null
+    const { email, name } = await req.json();
+    const user = await isAuthorized();
 
-    if (!organizationId) {
-      return NextResponse.json({ error: "Organization ID not found from Scalekit" },{ status: 400 });
+    if (!user) {
+      console.error("Unauthorized");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const existingUser = await db
+    if (!email || !name) {
+      console.error("Missing required fields");
+      return NextResponse.json(
+        { error: "Email and name are required" },
+        { status: 400 },
+      );
+    }
+
+    if (!user.organization_id) {
+      console.error(" Missing organization_id in session");
+      return NextResponse.json(
+        { error: "Missing organization_id" },
+        { status: 400 },
+      );
+    }
+
+    const existingInvite = await db
       .select()
-      .from(userTable)
-      .where(eq(userTable.email, user.email))
-      .limit(1);
+      .from(team_member)
+      .where(eq(team_member.user_email, email));
 
-    // 
-    if (existingUser.length === 0) {
-      await db.insert(userTable).values({
-        email: user.email,
-        name: user.name || "",
-        image: user.image || "",
-        organization_id: organizationId,
-      });
-    } 
-    const dashboardUrl = new URL("/dashboard", req.url);
+    if (existingInvite.length > 0) {
+      console.error("User already invited:", email);
+
+      return NextResponse.json(
+        { error: "User already invited" },
+        { status: 409 },
+      );
+    }
+
+
+    const scalekitResponse = await scalekit.user.createUserAndMembership(
+      user.organization_id,
+      {
+        email,
+        userProfile: {
+          firstName: name,
+          lastName: "",
+        },
+        sendInvitationEmail: true,
+      },
+    );
+
+    const invitedUser =
+      scalekitResponse?.invitedUser ||
+      scalekitResponse?.InvitedUser ||
+      scalekitResponse?.user ||
+      null;
+
+    await db.insert(team_member).values({
+      user_email: email,
+      name,
+      organization_id: user.organization_id,
+    });
+
+     const dashboardUrl = new URL("/dashboard", req.url);
     const response = NextResponse.redirect(dashboardUrl);
 
-    response.cookies.set("user_session", JSON.stringify(user), {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
-    response.cookies.delete("sk_state");
-    return response;
-  } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: err.message },{ status: 500 });
+
+    return response
+  } catch (error) {
+    console.error("🔥 Team Add Error:", error.message);
+
+    return NextResponse.json(
+      {
+        error: error.message || "Internal Server Error",
+      },
+      { status: 500 },
+    );
   }
-}  
+}
