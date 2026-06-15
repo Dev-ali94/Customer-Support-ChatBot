@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState, Suspense } from 'react';
 
 const page = () => {
-    const searchparams = useSearchParams();
+    const {searchparams} = useSearchParams();
     const token = searchparams?.get("token");
     const [metaData, setMetaData] = useState(null);
     const [sections, setSections] = useState([]);
