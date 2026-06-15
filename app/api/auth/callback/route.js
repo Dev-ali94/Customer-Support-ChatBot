@@ -1,125 +1,144 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import scalekit from "@/lib/scalekit";
 import { db } from "@/db/client";
-import { user } from "@/db/schema";
+import { team_member } from "@/db/schema";
+import { isAuthorized } from "@/lib/isAuthorized";
+import scalekit from "@/lib/scalekit";
 import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
-export async function GET(req) {
+export async function POST(req) {
   try {
-    const { searchParams } = req.nextUrl;
+    console.log("🚀 /api/team/add HIT");
 
-    const code = searchParams.get("code");
-    const returnedState = searchParams.get("state");
+    const body = await req.json();
+    console.log("📩 Request body:", body);
 
-    if (!code) {
-      console.error("❌ Missing authorization code");
-      return NextResponse.json({ error: "Missing code" }, { status: 400 });
-    }
+    const { email, name } = body;
 
-    const cookieStore = await cookies();
-    const savedState = cookieStore.get("sk_state")?.value;
+    const user = await isAuthorized();
+    console.log("👤 Auth user:", user);
 
-    if (savedState && savedState !== returnedState) {
-      console.error("❌ Invalid state", { savedState, returnedState });
-      return NextResponse.json({ error: "Invalid state" }, { status: 401 });
-    }
-
-    const redirectUrl = `${req.nextUrl.origin}/api/auth/callback`;
-
-    // 🔐 Authenticate with Scalekit
-    const authResult = await scalekit.authenticateWithCode(code, redirectUrl);
-
-    console.log("✅ Scalekit authResult:", JSON.stringify(authResult, null, 2));
-
-    const { users, idToken } = authResult;
-
-    if (!idToken) {
-      console.error("❌ Missing idToken from Scalekit response");
+    if (!user) {
+      console.log("❌ Unauthorized request");
       return NextResponse.json(
-        { error: "Authentication failed: missing idToken" },
-        { status: 500 }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
-    // 🔍 Validate token
-    const tokenData = scalekit.validateToken(idToken);
-
-    console.log("🔐 Token validation output:", JSON.stringify(tokenData, null, 2));
-
-    // Some SDKs wrap claims differently
-    const claims = tokenData?.claims || tokenData?.payload || tokenData;
-
-    console.log("📦 Extracted claims:", claims);
-
-    const organizationId =
-      claims?.organization_id ||
-      claims?.organizationId ||
-      claims?.org_id ||
-      claims?.oid;
-
-    if (!organizationId) {
-      console.error("❌ Organization ID missing in token");
-      console.error("Available claim keys:", Object.keys(claims || {}));
+    // ✅ Validate input
+    if (!email || !name) {
+      console.log("❌ Missing fields:", { email, name });
 
       return NextResponse.json(
         {
-          error: "Organization ID not found from Scalekit",
-          debug: {
-            claims,
-          },
+          error: "Missing email or name",
+          received: { email, name },
         },
         { status: 400 }
       );
     }
 
-    console.log("🏢 Organization ID found:", organizationId);
+    console.log("📧 Inviting user:", email);
 
-    // ✅ Check existing user
-    const existingUser = await db
+    // ✅ Check duplicate invite (IMPORTANT FIX: check by email param)
+    const existingInvite = await db
       .select()
-      .from(user)
-      .where(eq(user.email, users.email))
-      .limit(1);
+      .from(team_member)
+      .where(eq(team_member.user_email, email));
 
-    // ✅ Insert user if not exists
-    if (existingUser.length === 0) {
-      console.log("🆕 Creating new user:", users.email);
+    console.log("🔍 Existing invite result:", existingInvite);
 
-      await db.insert(user).values({
-        email: users.email,
-        name: users.name || "",
-        image: users.image || "",
-        organization_id: organizationId,
-      });
-    } else {
-      console.log("👤 User already exists:", users.email);
+    if (existingInvite.length > 0) {
+      console.log("⚠️ Duplicate invite detected");
+
+      return NextResponse.json(
+        {
+          error: "User already invited",
+          email,
+        },
+        { status: 400 }
+      );
     }
 
-    // 🔁 Redirect to dashboard
-    const dashboardUrl = new URL("/dashboard", req.url);
-    const response = NextResponse.redirect(dashboardUrl);
+    // ✅ Check organization
+    console.log("🏢 Organization ID:", user?.organization_id);
 
-    response.cookies.set("user_session", JSON.stringify(users), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+    if (!user.organization_id) {
+      console.log("❌ Missing organization ID in user session");
+
+      return NextResponse.json(
+        {
+          error: "Missing organization ID",
+          user,
+        },
+        { status: 410 }
+      );
+    }
+
+    // ✅ Scalekit call (safe)
+    let scalekitResponse;
+
+    try {
+      console.log("📡 Calling Scalekit...");
+
+      scalekitResponse =
+        await scalekit.user.createUserAndMembership(
+          user.organization_id,
+          {
+            email,
+            userProfile: {
+              firstName: name || "",
+              lastName: name || "",
+            },
+            sendInvitationEmail: true,
+          }
+        );
+
+      console.log(
+        "✅ Scalekit response:",
+        JSON.stringify(scalekitResponse, null, 2)
+      );
+    } catch (scalekitError) {
+      console.error("🔥 Scalekit ERROR:", scalekitError);
+
+      return NextResponse.json(
+        {
+          error: "Scalekit invite failed",
+          message: scalekitError?.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    const invitedUser =
+      scalekitResponse?.invitedUser ||
+      scalekitResponse?.InvitedUser ||
+      scalekitResponse?.user ||
+      null;
+
+    // ✅ Save to DB
+    console.log("💾 Saving team member...");
+
+    await db.insert(team_member).values({
+      user_email: email,
+      name,
+      organization_id: user.organization_id,
     });
 
-    response.cookies.delete("sk_state");
+    console.log("✅ Team member saved successfully");
 
-    console.log("✅ Authentication flow completed successfully");
-
-    return response;
-  } catch (err) {
-    console.error("🔥 Callback error:", err);
+    return NextResponse.json({
+      success: true,
+      invitedUser,
+    });
+  } catch (error) {
+    console.error("🔥 UNEXPECTED ERROR:", error);
 
     return NextResponse.json(
       {
         error: "Internal Server Error",
-        message: err?.message || "Unknown error",
+        message: error?.message,
+        stack: error?.stack,
       },
       { status: 500 }
     );
