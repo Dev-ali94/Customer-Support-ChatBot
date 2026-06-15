@@ -24,7 +24,7 @@ export async function GET(req) {
     const claims = scalekit.validateToken(idToken)
 
     const organizationId =
-      claims.organization?.id || claims.org_id || claims.oid || null
+      claims.organization_id || claims.org_id || claims.oid || null
     
     if (!organizationId) {
       return NextResponse.json(
