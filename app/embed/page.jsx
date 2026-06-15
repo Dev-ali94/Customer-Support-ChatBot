@@ -9,7 +9,7 @@ import React, { useEffect, useRef, useState, Suspense } from 'react';
 
 const page = () => {
     const searchparams = useSearchParams();
-    const token = searchparams.get("token");
+    const token = searchparams?.get("token");
     const [metaData, setMetaData] = useState(null);
     const [sections, setSections] = useState([]);
     const [activeSection, setIsActiveSection] = useState([])
