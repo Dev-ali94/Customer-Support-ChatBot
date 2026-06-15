@@ -36,26 +36,41 @@ const TeamSection = () => {
     useEffect(() => {
         fetchTeam()
     }, [])
-    const handelAddMember = async () => {
-        setIsAdding(true)
-        try {
-            const res = await fetch("/api/team/add", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: newMemberEmail, name: newMemberName })
+  const handelAddMember = async () => {
+    setIsAdding(true)
+    try {
+        const res = await fetch("/api/team/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: newMemberEmail,
+                name: newMemberName
             })
-            if (res.ok) {
-                setNewMemberEmail("")
-                setNewMemberName("")
-                setOpenDialog(false)
-                fetchTeam()
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+            setNewMemberEmail("")
+            setNewMemberName("")
+            setOpenDialog(false)
+            fetchTeam()
+
+            // 👇 THIS IS THE MISSING PART
+            if (data.redirect) {
+                window.location.href = data.redirect
+                // OR: router.push(data.redirect)
             }
-        } catch (error) {
-            console.log(error);
-        } finally {
-            setIsAdding(false)
+        } else {
+            console.log(data.error)
         }
+
+    } catch (error) {
+        console.log(error)
+    } finally {
+        setIsAdding(false)
     }
+}
     return (
         <Card className='border-white/5 bg-[#0a0a0e]'>
             <CardHeader className="flex flex-row items-center justify-between">

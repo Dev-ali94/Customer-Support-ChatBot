@@ -70,11 +70,10 @@ export async function POST(req) {
       organization_id: user.organization_id,
     });
 
-     const dashboardUrl = new URL("/dashboard", req.url);
-    const response = NextResponse.redirect(dashboardUrl);
-
-
-    return response
+    return NextResponse.json({
+  success: true,
+  redirect: "/dashboard",
+});
   } catch (error) {
     console.error("🔥 Team Add Error:", error.message);
 
