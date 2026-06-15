@@ -34,7 +34,7 @@ export async function POST(req) {
           error: "Missing email or name",
           received: { email, name },
         },
-        { status: 400 }
+        { status: 420 }
       );
     }
 
