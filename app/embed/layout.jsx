@@ -1,5 +1,5 @@
 import React from 'react'
-
+export const  dynamic = "force-dynamic";
 const layout = ({ children }) => {
     return (
         <div className="bg-[#050509] min-h-screen overflow-hidden flex flex-col antialiased text-zinc-100 selection:bg-zinc-800 font-sans">

@@ -1,8 +1,4 @@
 'use client';
-
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Button } from '@base-ui/react';
