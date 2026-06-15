@@ -8,36 +8,24 @@ import { eq } from "drizzle-orm";
 export async function GET(req) {
   try {
     const { searchParams } = req.nextUrl;
-
     const code = searchParams.get("code");
     const returnedState = searchParams.get("state");
-
     const cookieStore = await cookies();
     const savedState = cookieStore.get("sk_state")?.value;
-
-    console.log("savedState:", savedState);
-    console.log("returnedState:", returnedState);
-
-    // ✅ STATE CHECK (safe)
     if (savedState && savedState !== returnedState) {
       return NextResponse.json({ error: "Invalid state" }, { status: 401 });
     }
 
     const redirectUrl = `${req.nextUrl.origin}/api/auth/callback`;
 
-    const authResult = await scalekit.authenticateWithCode(
-      code,
-      redirectUrl
-    );
+    const authResult = await scalekit.authenticateWithCode(code,redirectUrl);
 
-    const scalekitUser = authResult.user;
+    const {users,idToken} = authResult;
+    const claims = scalekit.validateToken(idToken)
 
-    // 🔥 IMPORTANT: correct organization extraction
     const organizationId =
-      authResult.organization?.id ||
-      authResult.memberships?.[0]?.organizationId ||
-      null;
-
+      claims.organization?.id || claims.org_id || claims.oid || null
+    
     if (!organizationId) {
       return NextResponse.json(
         { error: "Organization ID not found from Scalekit" },
@@ -49,33 +37,22 @@ export async function GET(req) {
     const existingUser = await db
       .select()
       .from(user)
-      .where(eq(user.email, scalekitUser.email))
+      .where(eq(user.email, users.email))
       .limit(1);
 
     // ✅ INSERT OR UPDATE USER
     if (existingUser.length === 0) {
       await db.insert(user).values({
-        email: scalekitUser.email,
-        name: scalekitUser.name || "",
-        image: scalekitUser.image || "",
+        email: users.email,
+        name: users.name || "",
+        image: users.image || "",
         organization_id: organizationId,
       });
-    } else {
-      await db
-        .update(user)
-        .set({
-          name: scalekitUser.name,
-          image: scalekitUser.image,
-          organization_id: organizationId, // keep updated
-        })
-        .where(eq(user.email, scalekitUser.email));
-    }
-
-    // ✅ SESSION COOKIE
+    } 
     const dashboardUrl = new URL("/dashboard", req.url);
     const response = NextResponse.redirect(dashboardUrl);
 
-    response.cookies.set("user_session", JSON.stringify(scalekitUser), {
+    response.cookies.set("user_session", JSON.stringify(users), {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
