@@ -18,7 +18,7 @@ export async function GET(req) {
     console.log("savedState:", savedState);
     console.log("returnedState:", returnedState);
 
-    // ✅ SAFE STATE CHECK
+    // ✅ STATE CHECK (safe)
     if (savedState && savedState !== returnedState) {
       return NextResponse.json({ error: "Invalid state" }, { status: 401 });
     }
@@ -32,19 +32,33 @@ export async function GET(req) {
 
     const scalekitUser = authResult.user;
 
-    // ✅ SAVE / UPSERT USER
+    // 🔥 IMPORTANT: correct organization extraction
+    const organizationId =
+      authResult.organization?.id ||
+      authResult.memberships?.[0]?.organizationId ||
+      null;
+
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: "Organization ID not found from Scalekit" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ CHECK EXISTING USER
     const existingUser = await db
       .select()
       .from(user)
       .where(eq(user.email, scalekitUser.email))
       .limit(1);
 
+    // ✅ INSERT OR UPDATE USER
     if (existingUser.length === 0) {
       await db.insert(user).values({
         email: scalekitUser.email,
         name: scalekitUser.name || "",
         image: scalekitUser.image || "",
-        organization_id: scalekitUser.organization_id || "", // IMPORTANT
+        organization_id: organizationId,
       });
     } else {
       await db
@@ -52,6 +66,7 @@ export async function GET(req) {
         .set({
           name: scalekitUser.name,
           image: scalekitUser.image,
+          organization_id: organizationId, // keep updated
         })
         .where(eq(user.email, scalekitUser.email));
     }
@@ -62,7 +77,7 @@ export async function GET(req) {
 
     response.cookies.set("user_session", JSON.stringify(scalekitUser), {
       httpOnly: true,
-      secure: false, // ✅ IMPORTANT for dev
+      secure: false,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
