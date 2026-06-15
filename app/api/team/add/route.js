@@ -1,104 +1,59 @@
-import { db } from "@/db/client";
-import { team_member } from "@/db/schema";
-import { isAuthorized } from "@/lib/isAuthorized";
-import scalekit from "@/lib/scalekit";
-import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import scalekit from "@/lib/scalekit";
+import { db } from "@/db/client";
+import { user as userTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-export async function POST(req) {
+export async function GET(req) {
   try {
-    const user = await isAuthorized();
+    const { searchParams } = req.nextUrl;
+    const code = searchParams.get("code");
+    const returnedState = searchParams.get("state");
+    const cookieStore = await cookies();
+    const savedState = cookieStore.get("sk_state")?.value;
+    if (savedState && savedState !== returnedState) {
+      return NextResponse.json({ error: "Invalid state" }, { status: 401 });
+    }
+    const redirectUrl = `${req.nextUrl.origin}/api/auth/callback`;
+    const authResult = await scalekit.authenticateWithCode(code,redirectUrl);
+    const {user,idToken} = authResult;
+    const claims = await scalekit.validateToken(idToken)
+    const organizationId = claims.organization_id || claims.org_id || claims.oid || null
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID not found from Scalekit" },{ status: 400 });
     }
 
-    const { email, name } = await req.json();
-
-    if (!email || !name) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 401}
-      );
-    }
-
-    // ✅ FIX: check duplicate invite by EMAIL being invited
-    const existingInvite = await db
+    const existingUser = await db
       .select()
-      .from(team_member)
-      .where(eq(team_member.user_email, email));
+      .from(userTable)
+      .where(eq(userTable.email, user.email))
+      .limit(1);
 
-    if (existingInvite.length > 0) {
-      return NextResponse.json(
-        { error: "Invitation already sent to this user" },
-        { status: 402}
-      );
-    }
+    // 
+    if (existingUser.length === 0) {
+      await db.insert(userTable).values({
+        email: user.email,
+        name: user.name || "",
+        image: user.image || "",
+        organization_id: organizationId,
+      });
+    } 
+    const dashboardUrl = new URL("/dashboard", req.url);
+    const response = NextResponse.redirect(dashboardUrl);
 
-    // ✅ Ensure organization exists
-    if (!user.organization_id) {
-      return NextResponse.json(
-        { error: "Missing organization ID" },
-        { status: 403 }
-      );
-    }
-
-    // ✅ Scalekit call (safe handling)
-    let scalekitResponse;
-
-    try {
-      scalekitResponse = await scalekit.user.createUserAndMembership(
-        user.organization_id,
-        {
-          email,
-          userProfile: {
-            firstName: name || "",
-            lastName: name || "",
-          },
-          sendInvitationEmail: true,
-        }
-      );
-    } catch (scalekitError) {
-      console.error("❌ Scalekit error:", scalekitError);
-
-      return NextResponse.json(
-        {
-          error: "Failed to invite user via Scalekit",
-          message: scalekitError?.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log("✅ Scalekit response:", scalekitResponse);
-
-    // ✅ Safe extraction (no crash)
-    const invitedUser =
-      scalekitResponse?.invitedUser ||
-      scalekitResponse?.InvitedUser ||
-      scalekitResponse?.user ||
-      null;
-
-    // ✅ Save in DB
-    await db.insert(team_member).values({
-      user_email: email,
-      name: name,
-      organization_id: user.organization_id,
+    response.cookies.set("user_session", JSON.stringify(user), {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
     });
-
-    return NextResponse.json({
-      success: true,
-      invitedUser,
-    });
-  } catch (error) {
-    console.error("🔥 API error:", error);
-
-    return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        message: error?.message,
-      },
-      { status: 500 }
-    );
+    response.cookies.delete("sk_state");
+    return response;
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: err.message },{ status: 500 });
   }
-}
+}  
