@@ -1,6 +1,7 @@
 'use client';
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -11,7 +12,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 const Page = () => {
     const searchParams = useSearchParams();
-    const token = searchParams.get("token");
+    const token = searchParams?.get("token") || "";
 
     const [metaData, setMetaData] = useState(null);
     const [sections, setSections] = useState([]);
@@ -23,11 +24,13 @@ const Page = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState([]);
     const [input, setInput] = useState("");
-    const [isTyping, setIsTyping] = useState(false);
 
     const scrollRef = useRef(null);
 
+    // Safe browser-only logic
     useEffect(() => {
+        if (typeof window === "undefined") return;
+
         document.body.style.backgroundColor = "transparent";
         document.documentElement.style.backgroundColor = "transparent";
 
@@ -42,6 +45,7 @@ const Page = () => {
         );
     }, []);
 
+    // Fetch widget config
     useEffect(() => {
         if (!token) {
             setError("Missing Session Token");
@@ -52,7 +56,7 @@ const Page = () => {
         const fetchConfig = async () => {
             try {
                 const res = await fetch(`/api/widget/config?token=${token}`);
-                if (!res.ok) throw new Error("Failed to load widget configuration");
+                if (!res.ok) throw new Error("Failed to load widget");
 
                 const data = await res.json();
                 setMetaData(data.metadata);
@@ -80,7 +84,9 @@ const Page = () => {
 
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [message, isOpen, isTyping]);
+    }, [message]);
+
+    const primaryColor = metaData?.color || "#4f46e5";
 
     const toggleOpen = () => {
         const newState = !isOpen;
@@ -97,39 +103,8 @@ const Page = () => {
         );
     };
 
-    const primaryColor = metaData?.color || "#4f46e5";
-
-    if (loading) return null;
-
-    if (error && isOpen) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full bg-[#050509] border border-red-500/30 text-red-500/60 text-white">
-                <AlertCircle className="w-10 h-10 mb-2 text-red-500/60" />
-                <p>{error}</p>
-            </div>
-        );
-    }
-
-    if (!isOpen) {
-        return (
-            <button
-                onClick={toggleOpen}
-                style={{ backgroundColor: primaryColor }}
-                className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:brightness-110 transition-all text-white"
-            >
-                <Bot className="w-7 h-7" />
-            </button>
-        );
-    }
-
     const handleSend = async () => {
         if (!input.trim() || !token) return;
-
-        const currentSection = sections.find(
-            (s) => s.name === activeSection
-        );
-
-        const sourceIds = currentSection?.source_ids || [];
 
         const userMsg = {
             role: "user",
@@ -149,7 +124,6 @@ const Page = () => {
                 },
                 body: JSON.stringify({
                     messages: [...message, userMsg],
-                    knowledge_source_id: sourceIds,
                 }),
             });
 
@@ -159,37 +133,12 @@ const Page = () => {
                 ...prev,
                 {
                     role: "assistant",
-                    content:
-                        data.response ||
-                        "Sorry, something went wrong.",
+                    content: data.response || "Something went wrong",
                 },
             ]);
         } catch (err) {
             console.log(err);
         }
-    };
-
-    const handleSectionClick = (sectionName) => {
-        setActiveSection(sectionName);
-
-        const userMsg = {
-            role: "user",
-            content: sectionName,
-            section: null,
-        };
-
-        setMessage((prev) => [...prev, userMsg]);
-
-        setTimeout(() => {
-            setMessage((prev) => [
-                ...prev,
-                {
-                    role: "assistant",
-                    content: `You can ask me anything about ${sectionName}`,
-                    section: sectionName,
-                },
-            ]);
-        }, 800);
     };
 
     const handleKeyDown = (e) => {
@@ -199,21 +148,46 @@ const Page = () => {
         }
     };
 
+    // Loading
+    if (loading) return null;
+
+    // Error state
+    if (error && isOpen) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full bg-[#050509] text-red-500">
+                <AlertCircle className="w-10 h-10 mb-2" />
+                <p>{error}</p>
+            </div>
+        );
+    }
+
+    // Closed widget (floating button)
+    if (!isOpen) {
+        return (
+            <button
+                onClick={toggleOpen}
+                style={{ backgroundColor: primaryColor }}
+                className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg"
+            >
+                <Bot className="w-6 h-6" />
+            </button>
+        );
+    }
+
     return (
         <div className="flex flex-col h-screen bg-[#0A0A0E] overflow-hidden">
 
             {/* Header */}
-            <div className="h-14 border-b border-white/5 flex items-center justify-between px-4 bg-[#0E0E12]">
+            <div className="h-14 flex items-center justify-between px-4 border-b border-white/5 bg-[#0E0E12]">
                 <div className="flex items-center gap-3">
                     <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white"
                         style={{ backgroundColor: primaryColor }}
                     >
-                        <Bot className="w-5 h-5" />
+                        <Bot className="w-4 h-4" />
                     </div>
-
                     <div>
-                        <h1 className="text-sm text-white">Support</h1>
+                        <p className="text-sm text-white">Support</p>
                         <p className="text-xs text-gray-400">Online</p>
                     </div>
                 </div>
@@ -226,7 +200,7 @@ const Page = () => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4">
                 {message.map((msg, i) => (
-                    <div key={i} className="mb-4">
+                    <div key={i} className="mb-3">
                         <div
                             className={cn(
                                 "p-3 rounded-xl text-sm max-w-[80%]",
@@ -237,22 +211,6 @@ const Page = () => {
                         >
                             {msg.content}
                         </div>
-
-                        {msg.isWelcome && sections.length > 0 && (
-                            <div className="flex gap-2 mt-2 flex-wrap">
-                                {sections.map((s) => (
-                                    <button
-                                        key={s.id}
-                                        onClick={() =>
-                                            handleSectionClick(s.name)
-                                        }
-                                        className="px-3 py-1 text-xs rounded-full bg-zinc-800 text-white"
-                                    >
-                                        {s.name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 ))}
                 <div ref={scrollRef} />
@@ -265,20 +223,15 @@ const Page = () => {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        disabled={!activeSection}
-                        placeholder={
-                            activeSection
-                                ? "Type message..."
-                                : "Select a section"
-                        }
+                        placeholder="Type message..."
                         className="flex-1"
                     />
 
                     <Button
                         onClick={handleSend}
-                        disabled={!input.trim() || !activeSection}
+                        disabled={!input.trim()}
                         style={
-                            input.trim() && activeSection
+                            input.trim()
                                 ? { backgroundColor: primaryColor }
                                 : {}
                         }
