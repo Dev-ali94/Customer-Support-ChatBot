@@ -6,7 +6,7 @@
         if (!widgetId) {
             console.error("No ChatBot.Ai data-id");
         }
-        fetch("http://localhost:3000/api/widget/session", {
+        fetch("https://customer-support-chat-bot-one.vercel.app/api/widget/session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "omit",
@@ -21,7 +21,7 @@
                 throw new Error("Invalid session request");
             }
             const iframe = document.createElement("iframe")
-            iframe.src = "http://localhost:3000/embed?token=" + encodeURIComponent(data.token)
+            iframe.src = "https://customer-support-chat-bot-one.vercel.app/embed?token=" + encodeURIComponent(data.token)
             iframe.setAttribute("title", "support chat")
             iframe.style.position = "fixed"
             iframe.style.bottom = "20px"

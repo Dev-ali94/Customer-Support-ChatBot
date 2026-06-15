@@ -20,7 +20,7 @@ const DashboardOverview = () => {
     }, [])
     const handleCopyCode = () => {
         setCopied(true)
-        navigator.clipboard.writeText(`<script src="http://localhost:3000/widget.js" data-id="${data?.botId}" defer></script>`)
+        navigator.clipboard.writeText(`<script src="https://customer-support-chat-bot-one.vercel.app/widget.js" data-id="${data?.botId}" defer></script>`)
         setTimeout(() => {
             setCopied(false)
         }, 2000)
