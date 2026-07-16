@@ -1,6 +1,6 @@
 import React from 'react'
 
-const project = () => {
+const page = () => {
   return (
     <div>
       hellow
@@ -8,4 +8,4 @@ const project = () => {
   )
 }
 
-export default project
+export default page
