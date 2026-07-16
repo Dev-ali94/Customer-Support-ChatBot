@@ -38,7 +38,7 @@ const QuickAction = ({ onOpenModel }) => {
             <Button
                 variant='outline'
                 className="h-auto py-8 px-6 flex flex-col items-center justify-center gap-2 border-white/5 bg-[#0A0A0E] hover:bg-white/2  hover:border-zinc-500/30  transition-all hover:text-white group whitespace-normal"
-                onClick={() => onOpenModel("upload")}
+                onClick={() => onOpenModel("text")}
             >
                 <div className='p-3 rounded-full bg-zinc-500/30 border border-indoigo-500/20 group-hover:bg-zinc-500/20 transition-colors'>
                     <File className='w-6 h-6 text-zinc-400' />
