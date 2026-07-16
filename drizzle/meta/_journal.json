@@ -50,6 +50,20 @@
       "when": 1781362027852,
       "tag": "0006_uneven_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781532175135,
+      "tag": "0007_dry_nicolaos",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781532340391,
+      "tag": "0008_stormy_chameleon",
+      "breakpoints": true
     }
   ]
 }

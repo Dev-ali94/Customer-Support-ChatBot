@@ -9,7 +9,7 @@ import toast, { Toaster } from "react-hot-toast"
 const OnBoarding = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [formData, setFormData] = useState({ business_name: '', website_url: '', external_link: '' });
+    const [formData, setFormData] = useState({ business_name: '', website_url: '' });
     const progress = ((currentStep + 1) / steps.length) * 100
     const STEPS = steps[currentStep]
     const Icon = STEPS.icon
@@ -37,7 +37,6 @@ const OnBoarding = () => {
                 body: JSON.stringify({
                     business_name: formData.business_name,
                     website_url: formData.website_url,
-                    external_link: formData.external_link
                 })
             })
             await response.json()
